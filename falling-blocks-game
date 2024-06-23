@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falling Blocks Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #282c34;
+            color: white;
+        }
+        .container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            background-color: #444;
+            border: 2px solid #fff;
+            overflow: hidden;
+        }
+        .character {
+            position: absolute;
+            bottom: 10px;
+            left: 180px;
+            width: 40px;
+            height: 40px;
+            background-color: #f00;
+            border-radius: 8px;
+        }
+        .block {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #00f;
+            border-radius: 8px;
+        }
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        #start-button, #restart-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        #start-button:hover, #restart-button:hover {
+            background-color: #388e3c;
+            transform: scale(1.1);
+        }
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="start-screen">
+            <h1>Falling Blocks Game</h1>
+            <button id="start-button">Start Game</button>
+        </div>
+        <div id="game-over-screen" class="hidden">
+            <h1>Game Over!</h1>
+            <p id="final-score"></p>
+            <button id="restart-button">Restart Game</button>
+        </div>
+        <div id="score-board">
+            Score: <span id="score">0</span>
+        </div>
+        <div class="character" id="character"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.querySelector('.container');
+            const character = document.getElementById('character');
+            const startButton = document.getElementById('start-button');
+            const restartButton = document.getElementById('restart-button');
+            const startScreen = document.getElementById('start-screen');
+            const gameOverScreen = document.getElementById('game-over-screen');
+            const scoreBoard = document.getElementById('score');
+            const finalScore = document.getElementById('final-score');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            let score = 0;
+            let gameInterval;
+            let blockInterval;
+            let gameOver = false;
+
+            function startGame() {
+                score = 0;
+                gameOver = false;
+                scoreBoard.textContent = score;
+                startScreen.classList.add('hidden');
+                gameOverScreen.classList.add('hidden');
+                character.style.left = '180px';
+                gameInterval = setInterval(updateGame, 20);
+                blockInterval = setInterval(createBlock, 1000);
+            }
+
+            function endGame() {
+                gameOver = true;
+                clearInterval(gameInterval);
+                clearInterval(blockInterval);
+                document.querySelectorAll('.block').forEach(block => block.remove());
+                gameOverScreen.classList.remove('hidden');
+                finalScore.textContent = `Final Score: ${score}`;
+            }
+
+            function updateGame() {
+                if (gameOver) return;
+                score++;
+                scoreBoard.textContent = score;
+                document.querySelectorAll('.block').forEach(block => {
+                    const blockTop = parseInt(block.style.top);
+                    if (blockTop >= containerHeight) {
+                        block.remove();
+                    } else {
+                        block.style.top = `${blockTop + 4}px`;
+                        checkCollision(block);
+                    }
+                });
+            }
+
+            function createBlock() {
+                if (gameOver) return;
+                const block = document.createElement('div');
+                block.className = 'block';
+                block.style.top = '0px';
+                block.style.left = `${Math.floor(Math.random() * (containerWidth - 40))}px`;
+                container.appendChild(block);
+            }
+
+            function checkCollision(block) {
+                const blockRect = block.getBoundingClientRect();
+                const characterRect = character.getBoundingClientRect();
+                if (
+                    blockRect.left < characterRect.right &&
+                    blockRect.right > characterRect.left &&
+                    blockRect.top < characterRect.bottom &&
+                    blockRect.bottom > characterRect.top
+                ) {
+                    endGame();
+                }
+            }
+
+            function moveCharacter(event) {
+                const left = parseInt(character.style.left);
+                if (event.key === 'ArrowLeft' && left > 0) {
+                    character.style.left = `${left - 10}px`;
+                }
+                if (event.key === 'ArrowRight' && left < containerWidth - 40) {
+                    character.style.left = `${left + 10}px`;
+                }
+            }
+
+            startButton.addEventListener('click', startGame);
+            restartButton.addEventListener('click', startGame);
+            document.addEventListener('keydown', moveCharacter);
+        });
+    </script>
+</body>
+</html>
